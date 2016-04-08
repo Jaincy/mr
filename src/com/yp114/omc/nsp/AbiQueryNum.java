@@ -1,6 +1,8 @@
 package com.yp114.omc.nsp;
+
 import java.io.IOException;
 import java.util.Map;
+
 import com.yp114.omc.apponofflog.BaseMr;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -16,10 +18,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.yp114.omc.ip.IpSearch;
-import com.yp114.omc.utils.LatnUtil;
-import com.yp114.omc.utils.RegionUtil;
-public class  AbiQueryNum extends Configured implements
+public class AbiQueryNum extends Configured implements
         Tool {
 
     @Override
@@ -65,7 +64,7 @@ public class  AbiQueryNum extends Configured implements
                 throws IOException, InterruptedException {
             // TODO Auto-generated method stub
             String line = value.toString().trim().replaceAll("\t", "");
-            if (line.length() <= 50 || !line.contains("logid") || !line.contains("requestip"))
+            if (line.length() <= 50)
                 return;
             BaseMr baseMr = new BaseMr(line);
             Map subMap = baseMr.getSubMap();
@@ -76,24 +75,23 @@ public class  AbiQueryNum extends Configured implements
             String cityName = baseMr.sub("city_name");
             String regionCode = subMap.get("regionCode").toString();
             String latncode = subMap.get("latnCode").toString();
-            String requesttype = baseMr.sub("requesttype");
-            String channelno = baseMr.sub("channelno");
+            String requesttype = subMap.get("requesttype").toString();
+            String channelno = subMap.get("channelno").toString();
             String responsecode = baseMr.sub("responsecode");
             String imei = subMap.get("imei").toString();
             String code = baseMr.sub("code");
             String typecode1 = baseMr.sub("typecode1");
             String typecode2 = baseMr.sub("typecode2");
             // 组装
-            String keyValue = day_id + "\t" + hour_id + "\t" + requestIp + "\t"
-                    + cityCode + "\t" + cityName + "\t"
-                    + regionCode + "\t" + latncode + "\t" + requesttype + "\t" + channelno
-                    + "\t" + responsecode
-                    + "\t" + imei + "\t" + code + "\t" + typecode1 + "\t" + typecode2;
+            String keyValue = day_id + "\t" + hour_id + "\t" + requestIp + "\t" + cityCode + "\t" + cityName + "\t" +
+                    regionCode + "\t" + latncode + "\t" + requesttype + "\t" + channelno + "\t" + responsecode + "\t" +
+                    imei + "\t" + code + "\t" + typecode1 + "\t" + typecode2;
 
             word.set(keyValue);
             context.write(word, one);
         }
     }
+
     public static class OnOffLog4HiveReducer extends
             Reducer<Text, IntWritable, Text, IntWritable> {
         private IntWritable result = new IntWritable();
