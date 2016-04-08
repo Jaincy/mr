@@ -43,7 +43,6 @@ public class BaseMr {
 
         try {
             if (line.contains("\"" + str + "\"")) {
-
                 int start = line.indexOf("\"" + str + "\":\"") + 4 + str.length();
                 int end = start + line.substring(start).indexOf("\"");
                 ret = line.substring(start, end);
@@ -54,7 +53,7 @@ public class BaseMr {
             }
 
         } catch (Exception e) {
-            System.out.println(str);
+            System.out.println(line+"***"+str);
         }
         return ret;
     }
@@ -63,24 +62,41 @@ public class BaseMr {
         Map subMap = new HashMap();
         //时间
         String time = sub("logid");
+        String htime;
+        String rtime=sub("requesttime");
 
         String day_id = "noday_id";
         String hour_id = "nohour_id";
         if (time.length() > 9) {
             day_id = time.substring(0, 8);
             hour_id = time.substring(8, 10);
+        }else if (time.equals("nologid")&&!rtime.equals("norequesttime")) {
+            rtime=rtime.replace("-","").replace(":","").replace(" ","");
+            day_id = rtime.substring(0, 8);
+            hour_id = rtime.substring(8, 10);
+
+        }else if (line.startsWith("20")){
+            htime = line.replace("-","").replace(":","").replace(" ","");
+            if (htime.length()>9) {
+                day_id = htime.substring(0, 8);
+                hour_id = htime.substring(8, 10);
+            }
         }
+
         //地区编码
         IpSearch finder = IpSearch.getInstance();
         String cityCode = sub("cityCode").equals("nocityCode") ? "000000" : sub("cityCode");
+
         String conty = "noconty";
         String latnCode = "nolatnCode";
         String regionCode = "noregionCode";
         String city = "nocity";
         String province = "noprovince";
         String requestIp = sub("requestip");
+        System.out.println("requestIp");
         String adress;
-        if (!requestIp.equals("norequestip")) {
+        if (requestIp.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
+
             adress = finder.Get(requestIp).toString().trim().replaceAll("\t", "");
             String[] splits = adress.split("\\|");
 
@@ -103,7 +119,6 @@ public class BaseMr {
             regionCode = RegionUtil.getRegionCode(province);
             latnCode = LatnUtil.getRegionCode(city);
         }
-        ;
 
         //imei
         String imei;
@@ -116,22 +131,26 @@ public class BaseMr {
         else imei = "noimei";
 
         //channelno
-        String channelno = matchNum(sub("requesttype"));
+        String channelno = sub("channelno");
+        if (!channelno.equals("client")&&!channelno.matches("\\d+"))
+        channelno="nochannelno";
+
         //requesttype
-        String requesttype = matchNum(sub("requesttype"));
+        String requesttype = sub("requesttype");
+
+        if (!requesttype.matches("\\d+"))
+            requesttype="norequesttype";
 
         //subjectNum
-        /*备注：位数均单指电话号码不含区号
-         4	0开头，7位固定电话，8位固定电话，区号对照电话位数，见表；
-         8	10位数非400、800开头不要	1
-		 13	查有：1   查无：0
-		 14	去重
-		 15	比对 热度排序*/
-
         String sjNum = sub("subjectNum").replace("-", "");
+        if (!sjNum.equals("nosubjectNum")){
         int sl = sjNum.length();
-        String s4= sjNum.substring(0, 4);
-        String s3= sjNum.substring(0, 3);
+        String s4=null;
+        String s3=null;
+        if(sjNum.length()>4){
+            s4= sjNum.substring(0, 4);
+            s3= sjNum.substring(0, 3);
+        }
         if (sjNum.startsWith("+86") || sjNum.startsWith("086"))
             sjNum = sjNum.substring(3);
         else if (sjNum.startsWith("0086"))
@@ -155,7 +174,7 @@ public class BaseMr {
         else if (sjNum.startsWith("0"))
             if (sl != 11 && sl != 12)
                 sjNum = "return";
-
+        }
 
         subMap.put("regionCode", regionCode);
         subMap.put("latnCode", latnCode);
@@ -165,17 +184,18 @@ public class BaseMr {
         subMap.put("imei", imei);
         subMap.put("channelno", channelno);
         subMap.put("requesttype", requesttype);
-        subMap.put("sjNum",sjNum);
+        subMap.put("subjectNum",sjNum);
         return subMap;
 
 
     }
 
-    public String matchNum(String str) {
+    /*public String matchNum(String str) {
         if (!str.equals("no" + str) && !str.matches("^\\d+$"))
             return "no" + str;
         else return str;
-    }
+    }*/
+
 
 
     public BaseMr(String line) {
