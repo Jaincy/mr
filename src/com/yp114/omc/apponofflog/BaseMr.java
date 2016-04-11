@@ -147,6 +147,7 @@ public class BaseMr {
         int sl = sjNum.length();
         String s4=null;
         String s3=null;
+        //预处理
         if(sjNum.length()>4){
             s4= sjNum.substring(0, 4);
             s3= sjNum.substring(0, 3);
@@ -158,23 +159,24 @@ public class BaseMr {
         //去掉特定意义符号后，过滤乱码，匹配规则
         if (!sjNum.matches("^\\d+$"))
             sjNum = "return";
+
+         //过滤规则
+        if ((sjNum.startsWith("400")||sjNum.startsWith("800"))&&sl!=10)
+                sjNum = "return";
         else if (sjNum.indexOf("1") != 0 && sjNum.indexOf("0") != 0 && sl > 10)
-            sjNum = "return";
+                sjNum = "return";
         else if (sl < 3 || sl == 4)
-            sjNum = "return";
-        else if (sl == 10) {
-            if (s3 != "400" && s3 != "800")
                 sjNum = "return";
-            else if (s4 == "40005" || s4 == "4002" || s4 == "4003")
-                sjNum = "return";
+        else if (sl == 10&&((s3 != "400" && s3 != "800")||(s4 == "40005" || s4 == "4002" || s4 == "4003"))) {
+                    sjNum = "return";
         } else if (sl == 3 && sjNum.indexOf("1") != 0)
-            sjNum = "return";
-        else if (sl == 5 || sl == 6) if (sjNum.startsWith("1") || sjNum.startsWith("9"))
-            sjNum = "return";
-        else if (sjNum.startsWith("0"))
-            if (sl != 11 && sl != 12)
                 sjNum = "return";
+        else if (sl == 5 || sl == 6) if (sjNum.startsWith("1") || sjNum.startsWith("9"))
+                sjNum = "return";
+        else if (sjNum.startsWith("0")&&sl != 11 && sl != 12)
+                    sjNum = "return";
         }
+
 
         subMap.put("regionCode", regionCode);
         subMap.put("latnCode", latnCode);
