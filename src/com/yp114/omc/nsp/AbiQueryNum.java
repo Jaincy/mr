@@ -3,6 +3,7 @@ package com.yp114.omc.nsp;
 import java.io.IOException;
 import java.util.Map;
 
+
 import com.yp114.omc.apponofflog.BaseMr;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -27,6 +28,7 @@ public class AbiQueryNum extends Configured implements
         Configuration conf = getConf();
         Job job = Job.getInstance(conf, "AbiQueryNum");
         job.setJarByClass(AbiQueryNum.class);
+
 
         FileInputFormat.addInputPath(job, new Path(arg0[0]));
         FileOutputFormat.setOutputPath(job, new Path(arg0[1]));
@@ -85,7 +87,7 @@ public class AbiQueryNum extends Configured implements
             // 组装
             String keyValue = day_id + "\t" + hour_id + "\t" + requestIp + "\t" + cityCode + "\t" + cityName + "\t" +
                     regionCode + "\t" + latncode + "\t" + requesttype + "\t" + channelno + "\t" + responsecode + "\t" +
-                    imei + "\t" + code + "\t" + typecode1 + "\t" + typecode2;
+                    imei + "\t" + code + "\t" + typecode1 + "\t" + typecode2 ;
 
             word.set(keyValue);
             context.write(word, one);
