@@ -387,7 +387,7 @@ public class LatnUtil {
 		String regionCode = (String)latnMap.get(regionName);
 		
 		if(regionCode == null){
-			return 	"00000";	
+			return 	"000000";
 		}else{
 			return 	regionCode;	
 		}

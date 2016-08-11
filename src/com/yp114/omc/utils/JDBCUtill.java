@@ -25,11 +25,17 @@ public   class JDBCUtill {
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		
-
+/*
 		String driver ="com.mysql.jdbc.Driver";
 		String url = "jdbc:mysql://192.168.38.178:3306/omc?useUnicode=true&amp;characterEncoding=utf8";
 		String username = "root";
-		String password ="114omc";
+		String password ="114omc";*/
+
+		String driver ="com.mysql.jdbc.Driver";
+		//String url = "jdbc:mysql://180.153.50.244:3306/omc?useUnicode=true&amp;characterEncoding=utf8";
+		String url ="jdbc:mysql://180.153.50.244:3306/sctzb?useUnicode=true&characterEncoding=utf-8";
+		String username = "root";
+		String password ="W#&H0(nlA@n2dc";
 		
 		Class.forName(driver);
 		return DriverManager.getConnection(url, username, password);
