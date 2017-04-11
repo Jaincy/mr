@@ -1,34 +1,37 @@
-package com.yp114.omc.nsp;
+package com.yp114.omc.apponofflog.retained;
 
 import java.io.IOException;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
-
-import com.yp114.omc.apponofflog.BaseMr;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.BZip2Codec;
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-public class AbiQueryNum extends Configured implements
+public class AppOnTime2 extends Configured implements
         Tool {
 
     @Override
     public int run(String[] arg0) throws Exception {
         // TODO Auto-generated method stub
         Configuration conf = getConf();
-        Job job = Job.getInstance(conf, "AbiQueryNum");
-        job.setJarByClass(AbiQueryNum.class);
-
+        Job job = Job.getInstance(conf, "AppOnTime2");
+        job.setJarByClass(AppOnTime2.class);
 
         FileInputFormat.addInputPath(job, new Path(arg0[0]));
         FileOutputFormat.setOutputPath(job, new Path(arg0[1]));
@@ -37,7 +40,8 @@ public class AbiQueryNum extends Configured implements
         job.setMapperClass(OnOffLog4HiveMapper.class);
         job.setCombinerClass(OnOffLog4HiveReducer.class);
         job.setReducerClass(OnOffLog4HiveReducer.class);
-
+        // job.setPartitionerClass(cls);
+        // job.setNumReduceTasks(1);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
 
@@ -46,7 +50,7 @@ public class AbiQueryNum extends Configured implements
 
     public static void main(String[] args) {
         try {
-            ToolRunner.run(new AbiQueryNum(), args);
+            ToolRunner.run(new AppOnTime2(), args);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -60,38 +64,55 @@ public class AbiQueryNum extends Configured implements
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
 
+        DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+        java.util.Date d1;
+        java.util.Date d2;
+
+        long diff = 0;
+        String LastImei = "xxxxxxxxxx";
+        String LastTime = "20160101000000";
+        long diff_secondes = 0;
+        int count = 1;
+
         @Override
         protected void map(Object key, Text value,
                            Mapper<Object, Text, Text, IntWritable>.Context context)
                 throws IOException, InterruptedException {
             // TODO Auto-generated method stub
-            String line = value.toString().trim().replaceAll("\t", "");
-            if (line.length() <= 50)
-                return;
-            BaseMr baseMr = new BaseMr(line);
-            Map subMap = baseMr.getSubMap();
-            String day_id = subMap.get("day_id").toString();
-            String hour_id = subMap.get("hour_id").toString();
-            String requestIp = baseMr.sub("requestip");
-            String cityCode = subMap.get("cityCode").toString();
-            String cityName = baseMr.sub("city_name");
-            String regionCode = subMap.get("regionCode").toString();
-            String latncode = subMap.get("latnCode").toString();
-            String requesttype = subMap.get("requesttype").toString();
-            String channelno = subMap.get("channelno").toString();
-            String responsecode = baseMr.sub("responsecode");
-            String imei = subMap.get("imei").toString();
-            String code = baseMr.sub("code");
-            String typecode1 = baseMr.sub("typecode1");
-            String typecode2 = baseMr.sub("typecode2");
 
-            // 组装
-            String keyValue = day_id + "\t" + hour_id + "\t" + requestIp + "\t" + cityCode + "\t" + cityName + "\t" +
-                    regionCode + "\t" + latncode + "\t" + requesttype + "\t" + channelno + "\t" + responsecode + "\t" +
-                    imei + "\t" + code + "\t" + typecode1 + "\t" + typecode2 ;
+            String[] split = value.toString().split("\t");
+            String imei = split[0];
+            String s2 = split[1];
 
-            word.set(keyValue);
-            context.write(word, one);
+            if (imei.equals(LastImei)) {
+                try {
+                    d1 = df.parse(LastTime);
+                    d2 = df.parse(s2);
+
+                    diff = (d2.getTime() - d1.getTime()) / 1000;
+                } catch (ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
+                diff_secondes = (diff > 600) ? 0 : diff;
+
+                String keyValue = imei + "\t" + LastTime + "\t" + s2 + "\t"
+                        + diff_secondes;
+                word.set(keyValue);
+                context.write(word, one);
+
+            } else {
+
+                String keyValue = imei + "\t" + s2 + "\t" + s2 + "\t" + 0;
+                word.set(keyValue);
+                context.write(word, one);
+
+            }
+
+            LastImei = imei;
+            LastTime = s2;
+
         }
     }
 

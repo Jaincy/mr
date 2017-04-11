@@ -29,7 +29,7 @@ public class IpSearch {
 
 	public IpSearch() {
 
-		//Path path = Paths.get("/qqzeng-ip-utf8.dat");
+//		Path path = Paths.get("/qqzeng-ip-utf8.dat");
 		//Path path = Paths.get("E:\\qqzeng-ip-utf8.dat");
 	    Path path = Paths.get("/home/hadoop/jobs/qqzeng-ip-utf8.dat");
 

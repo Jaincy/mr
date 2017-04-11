@@ -77,6 +77,12 @@ public class Abi4Process extends Configured implements
             if (day_id.equals("noday_id"))
                 return;
             String hour_id = subMap.get("hour_id").toString();
+          /*  if (!(hour_id.startsWith("0")||hour_id.startsWith("1")||hour_id.startsWith("2")))
+                return;*/
+            if (!hour_id.matches("\\d+"))
+                return;
+            else if (Integer.parseInt(hour_id)>23)
+                return;
             String requestIp = baseMr.sub("requestip");
             String cityCode = subMap.get("cityCode").toString();
             String cityName = baseMr.sub("city_name");
@@ -85,7 +91,7 @@ public class Abi4Process extends Configured implements
             String requesttype = subMap.get("requesttype").toString();
             String channelno = subMap.get("channelno").toString();
             String imsi=baseMr.sub("imsi");
-            String subjectNum=subMap.get("subjectNum").toString();
+            String subjectNum=baseMr.sub("subjectNum");
             if (subjectNum.equals("return"))
                 return;
             String responsecode = baseMr.sub("responsecode");

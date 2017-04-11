@@ -2,6 +2,7 @@ package com.yp114.omc.nsp;
 
 import java.io.IOException;
 
+import com.yp114.omc.apponofflog.BaseMr;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -16,7 +17,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.util.ToolRunner;  
 
 import com.yp114.omc.utils.RegionUtil;
 
@@ -62,7 +63,7 @@ public class NspAbilityLogHuaWeiProcessor extends Configured implements Tool {
 
 		@Override
 		protected void map(Object key, Text value,
-				Mapper<Object, Text, Text, IntWritable>.Context context)
+				Context context)
 				throws IOException, InterruptedException {
 			// TODO Auto-generated method stub
 			String line = value.toString().trim();
@@ -79,7 +80,7 @@ public class NspAbilityLogHuaWeiProcessor extends Configured implements Tool {
 				String day_id="Noday";
 				if(split.length>=2){
 					
-					System.out.println(split);
+					//System.out.println(split);
 					 hour_id = split[split.length-1];
 					 day_id = split[split.length-2];
 					day_id=day_id.replaceAll("-", "");
@@ -201,18 +202,8 @@ public class NspAbilityLogHuaWeiProcessor extends Configured implements Tool {
 					e.printStackTrace();
 				}
 
-				//subjectNum
-				String subjectNum = "NoSubjectNum";
-				int subjectNumStartIndex = line.indexOf("subjectNum\\\":\\\"");
-				int subjectNumEndIndex = line.indexOf("\\\"}\",\"requestip");
-				if (subjectNumStartIndex > 0 && subjectNumEndIndex > 0
-						&& subjectNumStartIndex < subjectNumEndIndex)
 
-					subjectNum = line.substring(subjectNumStartIndex + 15,
-									subjectNumEndIndex);
-				
 				//requesttype
-				
 				String requesttype = "noRequesttype";
 				int requesttypeStartIndex = line.indexOf("requesttype\":\"");
 	  			int requesttypeEndIndex = line.indexOf("\",\"responsecode");
@@ -221,7 +212,96 @@ public class NspAbilityLogHuaWeiProcessor extends Configured implements Tool {
 	  				requesttype = line.substring(requesttypeStartIndex + 14,
 	  						requesttypeEndIndex);
 	  			}
-	  			//responsecode
+	  			
+
+				//subjectNum
+				/*String subjectNum = "NoSubjectNum";
+				int subjectNumStartIndex = line.indexOf("subjectNum\\\":\\\"");
+				int subjectNumEndIndex = line.indexOf("\\\"}\",\"requestip");
+				if (subjectNumStartIndex > 0 && subjectNumEndIndex > 0
+						&& subjectNumStartIndex < subjectNumEndIndex)
+
+					subjectNum = line.substring(subjectNumStartIndex + 15,
+									subjectNumEndIndex);
+				*/
+
+				BaseMr baseMr = new BaseMr(line);
+				String sjNum = baseMr.sub("subjectNum");
+				if ("64".equals(requesttype))
+				{
+					String id = "NoId";
+					int idStartIndex = line.indexOf("id\\\":\\\"");
+					int idEndIndex = line.indexOf("\\\"}\",\"requestip");
+					if ((idStartIndex > 0) && (idEndIndex > 0) &&
+							(idStartIndex < idEndIndex))
+					{
+						id = line.substring(idStartIndex + 7, idEndIndex);
+						sjNum = id;
+					}
+				}
+				/*sjNum =sjNum .replace("-", "");
+				if (!sjNum.equals("nosubjectNum")){
+					int sl = sjNum.length();
+					String s4=null;
+					String s3=null;
+					//预处理
+					if(sjNum.length()>4){
+						s4= sjNum.substring(0, 4);
+						s3= sjNum.substring(0, 3);
+					}
+					if (sjNum.startsWith("+86") || sjNum.startsWith("086"))
+						sjNum = sjNum.substring(3);
+					else if (sjNum.startsWith("0086"))
+						sjNum = sjNum.substring(4);
+					//去掉特定意义符号后，过滤乱码，匹配规则
+					if (!sjNum.matches("^\\d+$"))
+						return;
+
+					//过滤规则
+					if ((sjNum.startsWith("400")||sjNum.startsWith("800"))&&sl!=10)
+						return;
+					else if (sjNum.indexOf("1") != 0 && sjNum.indexOf("0") != 0 && sl > 10)
+						return;
+					else if (sl < 3 || sl == 4)
+						return;
+					else if (sl == 10&&((s3 != "400" && s3 != "800")||(s4 == "40005" || s4 == "4002" || s4 == "4003"))) {
+						return;
+					} else if (sl == 3 && sjNum.indexOf("1") != 0)
+						return;
+					else if (sl == 5 || sl == 6) if (!(sjNum.startsWith("1") || sjNum.startsWith("9")))
+						return;
+					else if (sjNum.startsWith("0")&&sl != 11 && sl != 12)
+						return;
+				}*/
+
+				/*sjNum=sjNum.replace("-","");
+				if (sjNum.startsWith("+86")||sjNum.startsWith("086"))
+					sjNum=sjNum.substring(3);
+				if (sjNum.startsWith("0086"))
+					sjNum=sjNum.substring(4);
+				int sl = sjNum.length();
+				String s4;
+				String s3;
+				if ( !sjNum.matches("^\\d+$"))
+					return;
+				else if (sjNum.indexOf("1") != 0 && sjNum.indexOf("0") != 0 && sl > 10)
+					return;
+				else if (sl < 3 || sl == 4)
+					return;
+				else if (sl == 10) {
+					s3 = sjNum.substring(0, 3);s4 = sjNum.substring(0, 4);
+					if (s3 != "400" && s3!= "800")
+						return;
+					else if (s4 == "40005" || s4 == "4002" || s4 == "4003")
+						return;
+				}else if (sl==3&&sjNum.indexOf("1")!=0)
+					return;
+				else if (sl==5||sl==6) if(sjNum.startsWith("1")||sjNum.startsWith("9"))
+					return;
+				else if (sjNum.startsWith("0"))
+					if (sl!=11&&sl!=12)
+						return;*/
+				//responsecode
 	  			String responsecode = "noResponsecode";
 	  			int responsecodeStartIndex = line.indexOf("responsecode\":\"");
 	  			int responsecodeEndIndex = line.indexOf("\",\"userAgent");
@@ -230,28 +310,13 @@ public class NspAbilityLogHuaWeiProcessor extends Configured implements Tool {
 	  				responsecode = line.substring(responsecodeStartIndex + 15,
 	  						responsecodeEndIndex);
 	  			}
-                //requesttime
-				
-				String requesttime = "noRequestime";
-				int requesttimeStartIndex = line.indexOf("requesttime\":\"");
-	  			int requesttimeEndIndex = line.indexOf("\",\"requesttype");
-
-	  			if (requesttimeStartIndex > 0 && requesttimeEndIndex > 0) {
-	  				requesttime = line.substring(requesttimeStartIndex + 14,
-	  						requesttimeEndIndex);
-	  			}
-	  			
 				
 				// 组装
 				String keyValue = day_id + "\t" +hour_id + "\t" +regionCode + "\t" + channelno + "\t" + IMEI
-						+ "\t" + IMSI + "\t" + queryNum + "\t" + subjectNum + "\t" + requesttype+ "\t" + responsecode
-						+"\t"+requesttime;
-/*				String keyValue = regionCode + "#v#" + version + "#o#" + opt
-						+ "#c#" + channelno + "#t#" + type + "#i#" + IMEI;
-*/				word.set(keyValue);
-				// word.set(regionCode + "#a#" + areacode + "#v#" + version +
-				// "#o#" + opt + "#c#" + channelno + "#t#" + type + "#i#" + IMEI
-				// );
+						+ "\t" + IMSI + "\t" + queryNum + "\t" + sjNum+ "\t" + requesttype+ "\t" + responsecode;
+
+     			word.set(keyValue);
+
 				context.write(word, one);
 
 			}
@@ -263,7 +328,7 @@ public class NspAbilityLogHuaWeiProcessor extends Configured implements Tool {
 		private IntWritable result = new IntWritable();
 		@Override
 		protected void reduce(Text key, Iterable<IntWritable> values,
-				Reducer<Text, IntWritable, Text, IntWritable>.Context context)
+				Context context)
 				throws IOException, InterruptedException {
 			// TODO Auto-generated method stub
 			

@@ -1,9 +1,8 @@
 package com.yp114.omc.apponofflog;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.yp114.omc.ip.IpSearch;
+import com.yp114.omc.utils.LatnUtil;
+import com.yp114.omc.utils.RegionUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -20,9 +19,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.yp114.omc.ip.IpSearch;
-import com.yp114.omc.utils.LatnUtil;
-import com.yp114.omc.utils.RegionUtil;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /*
@@ -38,7 +37,7 @@ nelno\":\"1210\",\"version\":\"7.2.1.0ctch1\",\"imei\":\"A0000044C31373\"}","req
  * 
  * 
  * */
-public class NspAppOnOffLog4HiveProcessor extends Configured implements
+public class App4HiveQueryNum extends Configured implements
 		Tool {
 
 	@Override
@@ -46,7 +45,7 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 		// TODO Auto-generated method stub
 		Configuration conf = getConf();
 		Job job = Job.getInstance(conf, "NspAppOnOffLog4HiveProcessor");
-		job.setJarByClass(NspAppOnOffLog4HiveProcessor.class);
+		job.setJarByClass(App4HiveQueryNum.class);
 
 		FileInputFormat.addInputPath(job, new Path(arg0[0]));
 		FileOutputFormat.setOutputPath(job, new Path(arg0[1]));
@@ -64,7 +63,7 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 
 	public static void main(String[] args) {
 		try {
-			ToolRunner.run(new NspAppOnOffLog4HiveProcessor(), args);
+			ToolRunner.run(new App4HiveQueryNum(), args);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -81,13 +80,13 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 
 		@Override
 		protected void map(Object key, Text value,
-				Mapper<Object, Text, Text, IntWritable>.Context context)
+				Context context)
 				throws IOException, InterruptedException {
 			// TODO Auto-generated method stub
 			String line = value.toString().trim().replaceAll("\t", "").replace(" ","");
 
 
-             
+
 			if (line.contains("logid")&&line.length() > 15) {
 
 				BaseMr baseMr=new BaseMr(line);
@@ -119,14 +118,14 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 
 				}
 
-				
+
 				/*String date_time = line.substring(0, 13);
 				String[] split = date_time.split(" ");
 				if (date_time.contains("201")) {
 				hour_id = split[split.length - 1].substring(0,2);
 				day_id = split[split.length - 2].replaceAll("-", "");
 				}*/
-				
+
 				// areacode
 				/*String areacode = "noAreacode";
 				try {
@@ -156,7 +155,7 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 				String regionCode = RegionUtil.getRegionCode(areacode);*/
 
 				// version
-				
+
 				String version =baseMr.sub("version");
 
 				// channelno
@@ -254,7 +253,7 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
                         if (IMEI.length()>5) {
                         	sub = IMSI.substring(3, 5);
 						}
-						
+
 						if (sub.equals("00") || sub.equals("02")
 								|| sub.equals("07")) {
 							opt = "YD";
@@ -291,8 +290,8 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 				String conty="noconty";
 				String cityCode="noCityCode";
 				String regionCode ="noRegionCode";
-						
-				
+
+
 				List<String> zcityList=new ArrayList<String>();
 				zcityList.add("澳门");
 				zcityList.add("台湾");
@@ -311,7 +310,7 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 				zcontyList.add("石河子");
 				String[] zcity={"台湾","香港","澳门","海南","天津","北京","重庆"};
 				String[] zconty={"济源","仙桃","潜江","天门","神农架","阿拉尔","石河子"};
-				
+
      			try {
 					int ipStartIndex = line.indexOf("\"requestip\":\"");
 
@@ -339,11 +338,11 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 							}else if ("".equals(city)) {
 								city=province;
 							}
-							
+
 							if (province.length() > 2) {
 								province = province.substring(0, 2);
 							}
-							
+
 							cityCode=LatnUtil.getRegionCode(city);
 							regionCode=RegionUtil.getRegionCode(province);
 						}
@@ -375,12 +374,13 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 				String keyValue = day_id + "\t" + hour_id + "\t" + regionCode
 						+ "\t" + version + "\t" + opt + "\t" + channelno + "\t"
 						+ type + "\t" + IMEI + "\t" + IMSI + "\t" +cityCode+"\t"+ requestIp
-						+"\t"+ deviceType+ "\t" + padOrPhone+"\t"+TEL;;
+						+"\t"+ deviceType+ "\t" + padOrPhone+"\t"+TEL;
 				/*
 				 * String keyValue = regionCode + "#v#" + version + "#o#" + opt
 				 * + "#c#" + channelno + "#t#" + type + "#i#" + IMEI;
 				 */
-   				// word.set(regionCode + "#a#" + areacode + "#v#" + version +
+				word.set(keyValue);
+				// word.set(regionCode + "#a#" + areacode + "#v#" + version +
 				// "#o#" + opt + "#c#" + channelno + "#t#" + type + "#i#" + IMEI
 				// );
 				context.write(word, one);
@@ -400,7 +400,7 @@ public class NspAppOnOffLog4HiveProcessor extends Configured implements
 
 		@Override
 		protected void reduce(Text key, Iterable<IntWritable> values,
-				Reducer<Text, IntWritable, Text, IntWritable>.Context context)
+				Context context)
 				throws IOException, InterruptedException {
 			// TODO Auto-generated method stub
 

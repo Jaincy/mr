@@ -1,10 +1,9 @@
 package com.yp114.omc.nsp;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.yp114.omc.apponofflog.BaseMr;
+import com.yp114.omc.ip.IpSearch;
 import com.yp114.omc.utils.LatnUtil;
+import com.yp114.omc.utils.RegionUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -18,14 +17,19 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
-
-import com.yp114.omc.ip.IpSearch;
-
-import com.yp114.omc.utils.RegionUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mortbay.log.Log;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *更新:从ability_querynum日志目录中过滤出商家详情信息(包含shopid等字段的)
+ * @author zhenzhen
+ * udpated 2016-12-04 下午2:11
+ */
 public class NspAbilityBusdetailLogProcessor extends Configured implements Tool {
 
 	@Override
@@ -65,11 +69,15 @@ public class NspAbilityBusdetailLogProcessor extends Configured implements Tool 
 				Context context)
 				throws IOException, InterruptedException {
 			String line = value.toString().trim();
-			
-			if (line.contains("{")&&line.substring(line.indexOf("{")).length() > 0) {
+			BaseMr baseMr = new BaseMr(line);
+			String requesttype=baseMr.sub("requesttype");
+            //过滤掉不包含shopid的记录
+//			if (line.contains("{")&&line.substring(line.indexOf("{")).length() > 0)
+				if (requesttype.equals("105")||requesttype.equals("170")){
 				try {
-					String date_time = line.substring(0, 13);
 
+
+					String date_time = line.substring(0, 13);
 					String[] split = date_time.split(" ");
 					String hour_id = "NoHour";
 					String day_id = "Noday";
@@ -78,8 +86,6 @@ public class NspAbilityBusdetailLogProcessor extends Configured implements Tool 
 						day_id = split[split.length - 2];
 						day_id = day_id.replaceAll("-", "");
 					}
-					
-
 						JSONObject jso = new JSONObject(line.substring(line.indexOf("{")));
 						// 功能点的Value
 						String subjectNum = "noValue";
@@ -93,6 +99,8 @@ public class NspAbilityBusdetailLogProcessor extends Configured implements Tool 
 						String channelno = "noChannelno";
 						// 商家名
 						String name = "noName";
+
+
 						if ((line.contains("requestinfo"))
 								&& (jso.getString("requestinfo")
 										.startsWith("{"))) {
@@ -115,13 +123,15 @@ public class NspAbilityBusdetailLogProcessor extends Configured implements Tool 
 
 							if (line.contains("channelno")) {
 								channelno = requestjso.getString("channelno");
-								if (channelno.length() >= 4) {
-									channelno = "noChannelno";
-								}
+								//if (channelno.length() >= 4) {?
+									//channelno = "noChannelno";
+								//}
 							}
 							if (line.contains("name")) {
 								name = requestjso.getString("name");
 							}
+
+
 
 						}
 						String responsecode = "noErrorCode";
@@ -195,23 +205,26 @@ public class NspAbilityBusdetailLogProcessor extends Configured implements Tool 
 							latnCode = LatnUtil.getRegionCode(city);
 							provinceCode = RegionUtil.getRegionCode(province);
 						}
-						System.out.println(requestip);
+
 
 					}
+					//"custId\":\"27705162\",\"custName\":
+					String custId=baseMr.sub("custId");
+					String custName=baseMr.sub("custName");
+
 						String reducekey = day_id + "\t" + hour_id + "\t"
 								+ subjectNum + "\t" + region + "\t" + shopid
 								+ "\t" + shopname + "\t" + channelno + "\t"
 								+ name + "\t" + requestip + "\t" + latnCode
-								+ "\t" + provinceCode + "\t" + responsecode;
+								+ "\t" + provinceCode + "\t" + responsecode+"\t"+requesttype+"\t"+custId+"\t"+custName;
 
 						context.write(new Text(reducekey), new IntWritable(1));
-					
-
 				} catch (JSONException e) {
 					e.printStackTrace();
+
+					Log.info(line);
 				}
 			}
-
 		}
 	}
 
@@ -223,7 +236,6 @@ public class NspAbilityBusdetailLogProcessor extends Configured implements Tool 
 		protected void reduce(Text key, Iterable<IntWritable> values,
 				Context context)
 				throws IOException, InterruptedException {
-
 			int sum = 0;
 			for (IntWritable val : values) {
 				sum += val.get();

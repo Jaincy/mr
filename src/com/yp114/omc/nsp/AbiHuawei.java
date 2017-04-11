@@ -103,6 +103,8 @@ public class AbiHuawei extends Configured implements Tool{
             if (sjNum.equals("return"))
                 return;
             String responsecode = baseMr.sub("responsecode");
+            String custId = baseMr.sub("custId");
+            String custName = subMap.get("custName").toString();
 
            /* //后加四个字段
             String url="http://180.153.50.28:9080/hy114/ClassGet?tel="+sjNum;
@@ -118,7 +120,8 @@ public class AbiHuawei extends Configured implements Tool{
 
             //组装
             String keyValue =day_id + "\t" +hour_id + "\t" +regionCode + "\t" + channelno + "\t" + imei
-                    + "\t" + imsi + "\t" + queryNum + "\t" + sjNum+ "\t" + requesttype+ "\t" + responsecode;
+                    + "\t" + imsi + "\t" + queryNum + "\t" + sjNum+ "\t" + requesttype+ "\t" + responsecode+ "\t"
+                    + custId + "\t" + custName;;
 
             word.set(keyValue);
             context.write(word, one);

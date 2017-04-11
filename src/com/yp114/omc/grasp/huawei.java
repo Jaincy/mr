@@ -41,9 +41,27 @@ public class Huawei {
     }
     public static void main(String[] args) throws IOException {
         Huawei h=new Huawei();
-        h.jiexi();
+       // h.jiexi();
+        String s=new String("sdf");
+        h.test(h);
+
 
     }
+    public static void test(Object o){
+        System.out.println("objedct");
+    }
+    public static void test(String s){
+        System.out.println("string");
+
+    }
+    @Test
+    public  void test(){
+        String s="sdf5sf46s4f654df923e";
+        System.out.println(s.replaceAll("[^\\d]",""));
+
+
+    }
+
 
 
 
